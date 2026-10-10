@@ -242,12 +242,12 @@
             <h3 id="empty-text" class="text-xl font-medium text-gray-500">No items found.</h3>
         </div>
     </main>
-    <!-- FIX: Replaced 'hidden' with smooth opacity transitions. Added flex by default but invisible. -->
-    <button id="game-trigger-btn" onclick="openGameModal()" class="flex opacity-0 pointer-events-none transition-opacity duration-500 fixed bottom-6 start-6 z-50 bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-2 py-1 rounded-full items-center gap-3 shadow-2xl hover:scale-105 animate-bounce cursor-pointer border-2 border-white/20 group">
-        <div class="bg-white/20 p-2 rounded-full group-hover:rotate-12 transition-transform">
-            <i class="fas fa-gamepad text-xl"></i>
+    <!-- Half-sized Game Trigger Button -->
+    <button id="game-trigger-btn" onclick="openGameModal()" class="flex opacity-0 pointer-events-none transition-opacity duration-500 fixed bottom-6 start-6 z-50 bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-1 rounded-full items-center gap-1.5 shadow-xl hover:scale-105 animate-bounce cursor-pointer border border-white/20 group">
+        <div class="bg-white/20 w-6 h-6 rounded-full flex items-center justify-center group-hover:rotate-12 transition-transform">
+            <i class="fas fa-gamepad text-[11px]"></i>
         </div>
-        <span class="font-bold text-sm pr-1">Play & Win!</span>
+        <span class="font-extrabold text-[9px] uppercase tracking-wider pr-2">Play</span>
     </button>
 
     <!-- Game Arcade Modal -->
@@ -1449,7 +1449,7 @@ function renderQuickAccessFilters() {
                 if (rect.top <= 180 && rect.bottom >= 180) { currentActiveSectionId = sec.id.replace('section-', ''); }
             });
 
-            if (currentActiveSectionId) {
+           if (currentActiveSectionId) {
                 const activeBtn = document.getElementById('sub-btn-' + currentActiveSectionId);
                 const subContainer = document.getElementById('sub-category-filters');
                 if (activeBtn && subContainer) {
@@ -1457,17 +1457,34 @@ function renderQuickAccessFilters() {
                 }
             }
 
-            // Smoothly show floating buttons after scrolling past the hero header and 1-2 categories (approx 600px)
+            // Floating buttons logic: Hide instantly while scrolling, reappear after scroll stops
             const backToTopBtn = document.getElementById('back-to-top-btn');
             const gameBtn = document.getElementById('game-trigger-btn');
             
-            if (currentScrollY > 600) {
-                if (backToTopBtn) { backToTopBtn.classList.remove('opacity-0', 'pointer-events-none'); backToTopBtn.classList.add('opacity-100'); }
-                if (gameBtn && isGameTriggerEnabled) { gameBtn.classList.remove('opacity-0', 'pointer-events-none'); gameBtn.classList.add('opacity-100'); }
-            } else {
-                if (backToTopBtn) { backToTopBtn.classList.add('opacity-0', 'pointer-events-none'); backToTopBtn.classList.remove('opacity-100'); }
-                if (gameBtn && isGameTriggerEnabled) { gameBtn.classList.add('opacity-0', 'pointer-events-none'); gameBtn.classList.remove('opacity-100'); }
-            } 
+            // 1. Hide buttons immediately as soon as a scroll motion is detected
+            if (backToTopBtn) { 
+                backToTopBtn.classList.add('opacity-0', 'pointer-events-none'); 
+                backToTopBtn.classList.remove('opacity-100'); 
+            }
+            if (gameBtn && isGameTriggerEnabled) { 
+                gameBtn.classList.add('opacity-0', 'pointer-events-none'); 
+                gameBtn.classList.remove('opacity-100'); 
+            }
+
+            // 2. Wait 600ms after scrolling stops to reveal them past 600px
+            clearTimeout(uiScrollTimeout);
+            uiScrollTimeout = setTimeout(() => {
+                if (window.scrollY > 600) {
+                    if (backToTopBtn) { 
+                        backToTopBtn.classList.remove('opacity-0', 'pointer-events-none'); 
+                        backToTopBtn.classList.add('opacity-100'); 
+                    }
+                    if (gameBtn && isGameTriggerEnabled) { 
+                        gameBtn.classList.remove('opacity-0', 'pointer-events-none'); 
+                        gameBtn.classList.add('opacity-100'); 
+                    }
+                }
+            }, 600);
         }, {passive: true});
 
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }  
@@ -2712,6 +2729,8 @@ function renderQuickAccessFilters() {
 
 // --- CUSTOM PWA INSTALL LOGIC ---
         let deferredPrompt;
+        let installPromptTimer; // NEW: Keeps track of the timers so they don't overlap
+        
         const installModal = document.getElementById('pwa-install-modal');
         const installBackdrop = document.getElementById('pwa-backdrop');
         const installCard = document.getElementById('pwa-install-card');
@@ -2719,19 +2738,26 @@ function renderQuickAccessFilters() {
 
         // 1. Catch the browser's native install trigger
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault(); // Stop the default browser bar from showing
-            deferredPrompt = e; // Save it for our custom button
+            e.preventDefault(); 
+            deferredPrompt = e; 
             
-            // Wait 4 seconds before showing the popup so the user sees the menu first
-            setTimeout(showInstallPrompt, 7000); 
+            // Initial wait: 15 seconds before the very first popup
+            clearTimeout(installPromptTimer);
+            installPromptTimer = setTimeout(showInstallPrompt, 15000); 
         });
 
         function showInstallPrompt() {
+            // STRICT SAFETY: Never show if they are already running the installed standalone app!
+            if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) return;
+            
+            // STRICT SAFETY: Never show if the browser says it's already installed
+            if (!deferredPrompt) return; 
+
             if(rawBranding && rawBranding.smartLogo) {
                 document.getElementById('pwa-popup-logo').src = rawBranding.smartLogo;
             }
             installModal.classList.remove('hidden'); installModal.classList.add('flex');
-            void installModal.offsetWidth; // Trigger reflow
+            void installModal.offsetWidth; 
             installBackdrop.classList.replace('opacity-0', 'opacity-100');
             installCard.classList.remove('translate-y-full', 'sm:scale-95', 'opacity-0');
             installCard.classList.add('translate-y-0', 'sm:scale-100', 'opacity-100');
@@ -2742,23 +2768,34 @@ function renderQuickAccessFilters() {
             installCard.classList.remove('translate-y-0', 'sm:scale-100', 'opacity-100');
             installCard.classList.add('translate-y-full', 'sm:scale-95', 'opacity-0');
             setTimeout(() => { installModal.classList.remove('flex'); installModal.classList.add('hidden'); }, 300);
+
+            // NEW: If they just closed it but haven't installed it yet, ask again in 25 seconds
+            if (deferredPrompt) {
+                clearTimeout(installPromptTimer);
+                installPromptTimer = setTimeout(showInstallPrompt, 25000);
+            }
         }
 
         // 2. When the user clicks your custom Install button
         installBtn.addEventListener('click', async () => {
             if (deferredPrompt) {
-                deferredPrompt.prompt(); // Show the official Google/Android popup
+                deferredPrompt.prompt(); // Show the official Android popup
                 const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') { console.log('User installed the app!'); }
-                deferredPrompt = null; // Clear it out
-                closeInstallPrompt(); // Hide our custom card
+                
+                if (outcome === 'accepted') { 
+                    // Success! Delete the prompt memory so the 25-second loop dies forever
+                    deferredPrompt = null; 
+                    clearTimeout(installPromptTimer);
+                }
+                closeInstallPrompt(); 
             }
         });
 
-        // 3. Confirm installation is finished
+        // 3. Confirm installation is officially finished
         window.addEventListener('appinstalled', () => {
+            deferredPrompt = null; // Kill future prompts completely
+            clearTimeout(installPromptTimer); // Kill any active timers
             closeInstallPrompt();
-            deferredPrompt = null;
         });
 
         window.addEventListener('pageshow', function (event) { if (event.persisted) { window.location.reload(); } });
