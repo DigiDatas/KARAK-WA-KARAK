@@ -533,7 +533,7 @@
                         <!-- WhatsApp Button (Reduced flex width) -->
                         <button onclick="smartWhatsAppOrder()" class="flex-[0.8] min-w-0 h-11 bg-green-500 text-white rounded-xl hover:bg-green-600 transition flex items-center justify-center gap-1.5 shadow-sm px-1">
                             <i class="fab fa-whatsapp text-[16px] shrink-0"></i> 
-                            <span id="label-wa" class="text-[11px] sm:text-xs font-bold truncate">WhatsApp</span>
+                            <span id="label-wa" class="text-[11px] sm:text-xs font-bold truncate">Send Order</span>
                         </button>
 
                         <!-- Cart Button (Extended flex width) -->
@@ -773,8 +773,8 @@
         let isGameTriggerEnabled = false;
 
         const staticText = {
-            en: { search: 'Search menu...', empty: 'No items found.', calories: 'Calories', recipe: 'Recipe / Ingredients', video: 'Watch Video', call: 'Call to Order', wa: 'WhatsApp', share: 'Share', contact: 'Contact Us', location: 'Location', deliveryPrefix: 'Delivery Charge:', todaySpecial: '🌟 Today\'s Specials', all: 'All', specialBadge: "Today's Special" },
-            ar: { search: 'ابحث في القائمة...', empty: 'لم يتم العثور على عناصر.', calories: 'سعرة حرارية', recipe: 'الوصفة / المكونات', video: 'شاهد الفيديو', call: 'اتصل للطلب', wa: 'واتساب', share: 'مشاركة', contact: 'اتصل بنا', location: 'الموقع', deliveryPrefix: 'رسوم التوصيل:', todaySpecial: '🌟 أطباق اليوم المميزة', all: 'الكل', specialBadge: "طبق اليوم" }
+            en: { search: 'Search menu...', empty: 'No items found.', calories: 'Calories', recipe: 'Recipe / Ingredients', video: 'Watch Video', call: 'Call', wa: 'Send Order', share: 'Share', contact: 'Contact Us', location: 'Location', deliveryPrefix: 'Delivery Charge:', todaySpecial: '🌟 Today\'s Specials', all: 'All', specialBadge: "Today's Special" },
+            ar: { search: 'ابحث في القائمة...', empty: 'لم يتم العثور على عناصر.', calories: 'سعرة حرارية', recipe: 'الوصفة / المكونات', video: 'شاهد الفيديو', call: 'اتصال', wa: 'إرسال الطلب', share: 'مشاركة', contact: 'اتصل بنا', location: 'الموقع', deliveryPrefix: 'رسوم التوصيل:', todaySpecial: '🌟 أطباق اليوم المميزة', all: 'الكل', specialBadge: "طبق اليوم" }
         };
 
         async function init() {
@@ -1758,10 +1758,18 @@ function renderQuickAccessFilters() {
                     const a = document.createElement('a'); a.href = lowerLink.startsWith('http') ? link : `https://${link}`; a.target = '_blank';
                     
                     if (matchedPlatform.name === 'google') {
-                        a.className = `w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-blue-500 transition-all duration-300 hover:bg-gray-50 shadow-sm`;
-                        a.innerHTML = `<i class="fab fa-google text-lg"></i>`;
+                        // NEW: Bold Google Review button with text and 5 stars
+                        const reviewText = currentLang === 'en' ? 'Review' : 'تقييم';
+                        a.className = `h-10 px-3.5 rounded-full border border-gray-200 bg-white flex items-center justify-center gap-1.5 transition-all duration-300 hover:bg-gray-50 shadow-sm`;
+                        a.innerHTML = `
+                            <i class="fab fa-google text-blue-500 text-sm"></i>
+                            <span class="font-extrabold text-gray-800 text-xs mt-px">${reviewText}</span>
+                            <div class="flex text-yellow-400 text-[9px] gap-[1px] ms-0.5">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        `;
                     } else {
-                        a.className = `w-10 h-10 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center ${matchedPlatform.color} transition-all duration-300 ${matchedPlatform.hover} hover:text-white shadow-sm`;
+                        a.className = `w-10 h-10 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center ${matchedPlatform.color} transition-all duration-300 ${matchedPlatform.hover} hover:text-white shadow-sm shrink-0`;
                         a.innerHTML = `<i class="${matchedPlatform.icon}"></i>`;
                     }
                     reviewIconsContainer.appendChild(a);
@@ -1900,11 +1908,14 @@ function renderQuickAccessFilters() {
 
         function smartWhatsAppOrder() {
             if (cart.length > 0) {
-                const isAlreadyInCart = cart.some(c => String(c.id) === String(currentOpenItemId));
-                if (!isAlreadyInCart) { addToCart(); }
+                // If anything is in the cart (like a related item), just open the cart!
+                // Do NOT force-add the currently open main item anymore.
                 openCartModal();
-            } else { openWhatsAppItem(); }
-        }        
+            } else { 
+                // If the cart is totally empty, fast-order the single open item
+                openWhatsAppItem(); 
+            }
+        }       
 
         function shareItem() {
             if (!currentOpenItemId) return;
@@ -2098,7 +2109,8 @@ function renderQuickAccessFilters() {
             const isModalOpen = !document.getElementById('productModal').classList.contains('hidden');
 
             if (item.isVariable) {
-                if (isModalOpen) {
+                // Ensure it only pulls variant data if the clicked button IS the main open item
+                if (isModalOpen && String(id) === String(currentOpenItemId)) {
                     variantName = document.getElementById('productModal').getAttribute('data-selected-variant') || item.variants[0].variantName;
                     price = parseFloat(document.getElementById('productModal').getAttribute('data-selected-price')) || item.variants[0].price;
                 } else {
@@ -2176,25 +2188,35 @@ function renderQuickAccessFilters() {
                 const icons = document.querySelectorAll(`.quick-add-icon-${item.id}`);
                 
                 if (item.isVariable) {
-                    // For variable items, lock the grid button to the Orange "Options" state
                     btns.forEach(btn => {
-                        btn.className = `quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-600 hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto`;
+                        btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                        btn.classList.add('bg-orange-500', 'hover:bg-orange-600', 'z-10', 'relative', 'pointer-events-auto');
                     });
                     icons.forEach(icon => {
-                        icon.className = `quick-add-icon-${item.id} fas fa-list-ul text-sm transition-transform duration-500 pointer-events-none`;
+                        icon.classList.remove('fa-plus', 'fa-minus', 'rotate-180');
+                        icon.classList.add('fa-list-ul', 'rotate-0');
                     });
                 } else {
-                    // For normal items, standard add/remove state
                     const isInCart = cart.some(c => String(c.id) === String(item.id));
                     btns.forEach(btn => {
-                        btn.className = isInCart 
-                            ? `quick-add-btn-${item.id} bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-110 transition-colors duration-300`
-                            : `quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-600 hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto`;
+                        // Ensure the button is always clickable!
+                        btn.classList.add('z-10', 'relative', 'pointer-events-auto');
+                        if (isInCart) {
+                            btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+                            btn.classList.add('bg-red-500', 'hover:bg-red-600');
+                        } else {
+                            btn.classList.remove('bg-red-500', 'hover:bg-red-600');
+                            btn.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                        }
                     });
                     icons.forEach(icon => {
-                        icon.className = isInCart
-                            ? `quick-add-icon-${item.id} fas fa-minus text-sm transition-transform duration-500 rotate-180 pointer-events-none`
-                            : `quick-add-icon-${item.id} fas fa-plus text-[10px] sm:text-sm transition-transform duration-500 rotate-0 pointer-events-none`;
+                        if (isInCart) {
+                            icon.classList.remove('fa-plus', 'fa-list-ul', 'rotate-0');
+                            icon.classList.add('fa-minus', 'rotate-180');
+                        } else {
+                            icon.classList.remove('fa-minus', 'fa-list-ul', 'rotate-180');
+                            icon.classList.add('fa-plus', 'rotate-0');
+                        }
                     });
                 }
             });
