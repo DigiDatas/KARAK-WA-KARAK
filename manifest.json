@@ -1,8 +1,8 @@
 {
-  "name": "ShawarMax Menu",
-  "short_name": "ShawarMax",
-  "start_url": "/ShawarMax-Al-Manar/index.html",
-  "scope": "/ShawarMax-Al-Manar/",
+  "name": "KARAK-WA-KARAK",
+  "short_name": "KARAK Menu",
+  "start_url": "/KARAK-WA-KARAK/index.html",
+  "scope": "/KARAK-WA-KARAK/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#ef4444",
