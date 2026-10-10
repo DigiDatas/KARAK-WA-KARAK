@@ -83,10 +83,7 @@
 
     <header id="hero-section" class="pt-24 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center relative overflow-hidden rounded-b-3xl sm:rounded-b-none bg-gray-900 text-white mb-2 bg-cover bg-center" style="background-image: linear-gradient(to bottom, rgba(17,24,39,0.8), rgba(17,24,39,0.95));">
         <div class="relative z-10 py-6">
-            <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-md">
-                <span id="hero-title1">Welcome to</span> <br/>
-                <span id="hero-title2" class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-400">Our Restaurant</span>
-            </h1>
+            
 
             <div id="offer-carousel-wrapper" class="hidden relative h-44 sm:h-48 mt-6 mb-2 mx-auto max-w-5xl overflow-hidden flex items-center justify-center">
                 </div>
@@ -385,12 +382,17 @@
                 
                 <p id="modalDesc" class="text-gray-600 mb-4 leading-relaxed text-sm"></p>
                 
-                <div class="flex flex-wrap gap-2 mb-4">
-                    <div class="flex items-center text-gray-700 text-sm bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg inline-flex">
+                <!-- Combined Calories & Social Reviews Row -->
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <!-- Calories (Left) -->
+                    <div id="modalCaloriesContainer" class="hidden items-center text-gray-700 text-sm bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg">
                         <i class="fas fa-fire text-orange-500 me-2 text-lg"></i>
                         <span id="modalCalories" class="font-bold text-gray-900 text-base me-1"></span>
                         <span id="label-calories" class="text-xs">Calories</span>
                     </div>
+                    
+                    <!-- Review Icons (Right) -->
+                    <div id="modalReviewIcons" class="flex flex-wrap gap-2 ml-auto"></div>
                 </div>
 
 <!-- NEW: Variant / Size Selector -->
@@ -409,11 +411,7 @@
                     <div id="recipeToggleText" class="text-center text-[10px] font-bold text-yellow-600 mt-1 hidden"><i class="fas fa-chevron-down"></i> Read More</div>
                 </div>
 
-                <div id="modalReviewArea" class="hidden mb-2 flex-col gap-2">
-                    <h4 class="font-bold text-gray-700 text-sm border-b border-gray-100 pb-1">Write your honest Reviews & Share your Media with US</h4>
-                    <div id="modalReviewIcons" class="flex flex-wrap gap-2 pt-1">
-                        </div>
-                </div>
+                
 
                 <div id="modalRelatedArea" class="hidden mt-4 mb-2 flex-col gap-2">
                     <h4 class="font-bold text-gray-800 text-sm mb-1">Frequently Bought Together</h4>
@@ -661,7 +659,7 @@
         let selectedMainCategories = new Set(); 
         let selectedSubCategories = new Set();  
         let searchQuery = '';
-        let likedItems = new Set(JSON.parse(localStorage.getItem('likedItems')) || []);
+        
         let currentOpenItemId = null;
         let offerInterval = null;
         let currentOfferIndex = 0;
@@ -790,9 +788,7 @@
             document.getElementById('nav-title').textContent = rawBranding.B || "My Restaurant";
             document.getElementById('footer-title').textContent = rawBranding.B || "My Restaurant";
             
-            const welcomeText = currentLang === 'en' ? "Welcome to" : "مرحباً بكم في";
-            document.getElementById('hero-title1').textContent = welcomeText;
-            document.getElementById('hero-title2').textContent = rawBranding.B || (currentLang === 'en' ? "Our Restaurant" : "مطعمنا");
+            
             
             document.getElementById('f-phone').textContent = rawBranding.C || "--";
             document.getElementById('f-whatsapp').textContent = rawBranding.D || "--";
@@ -1324,7 +1320,6 @@
                 card.className = cardClasses; card.style.animation = `fadeInUp 0.4s ease forwards ${delay}ms`;
                 card.onclick = () => openModal(item.id);
 
-                const isLiked = likedItems.has(item.id);
                 let cardCurrencyDisplay = getSmartCurrency(globalCurrency, "text-[10px] sm:text-xs font-normal mx-0.5 text-gray-500");
                 
                 // NEW: Show "Starts at" if it's a variable item
@@ -1346,9 +1341,7 @@
                 const btnIcon = item.isVariable ? 'fa-list-ul' : 'fa-plus';
 
                 card.innerHTML = `
-                    <button onclick="toggleLike(event, '${item.id}')" class="absolute top-2 start-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shadow-sm z-20 text-sm">
-                        <i class="${isLiked ? 'fas text-red-500' : 'far'} fa-heart"></i>
-                    </button>
+                    
                     <div class="relative aspect-[4/3] overflow-hidden shrink-0 bg-gray-100 rounded-t-2xl">
                         <div class="mini-img-slider mini-slider-${item.id} flex w-full h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar" style="scroll-behavior: smooth;" data-img-count="${urls.length}">
                             ${imagesHtml}
@@ -1360,8 +1353,8 @@
                             <h4 class="text-sm sm:text-base font-bold text-gray-900 leading-tight">${item.name}</h4>
                             <span class="font-extrabold text-red-600 whitespace-nowrap text-sm sm:text-base shrink-0">${priceHtml}</span>
                         </div>
-                        <p class="text-xs text-gray-500 line-clamp-2 mt-1 mb-2 flex-grow">${item.desc}</p>
-                        <div class="flex justify-between items-end mt-1">
+                        
+                        <div class="flex justify-between items-end mt-auto pt-2">
                             ${item.calories ? `<div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-orange-500 bg-orange-50 w-fit px-2 py-1 rounded-md"><i class="fas fa-fire"></i> ${item.calories} Cal</div>` : '<div></div>'}
                             <button onclick="${clickAction}" class="quick-add-btn-${item.id} bg-orange-500 text-white w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300 relative z-10 pointer-events-auto">
                                 <i class="quick-add-icon-${item.id} fas ${btnIcon} text-sm transition-transform duration-500 pointer-events-none"></i>
@@ -1485,8 +1478,15 @@
             }
             
 
-            if(item.calories) { document.getElementById('modalCalories').textContent = item.calories; document.getElementById('modalCalories').parentElement.classList.remove('hidden'); document.getElementById('modalCalories').parentElement.classList.add('inline-flex'); } 
-            else { document.getElementById('modalCalories').parentElement.classList.add('hidden'); document.getElementById('modalCalories').parentElement.classList.remove('inline-flex'); }
+            const calContainer = document.getElementById('modalCaloriesContainer');
+            if(item.calories) { 
+                document.getElementById('modalCalories').textContent = item.calories; 
+                calContainer.classList.remove('hidden'); 
+                calContainer.classList.add('flex'); 
+            } else { 
+                calContainer.classList.add('hidden'); 
+                calContainer.classList.remove('flex'); 
+            }
 
             const recipeArea = document.getElementById('modalRecipeArea');
             if(item.recipe) {
@@ -1502,7 +1502,6 @@
             if(item.video) { vidBtn.href = item.video; vidBtn.classList.remove('hidden'); } 
             else { vidBtn.classList.add('hidden'); }
 
-            const reviewArea = document.getElementById('modalReviewArea');
             const reviewIconsContainer = document.getElementById('modalReviewIcons');
             reviewIconsContainer.innerHTML = ''; 
 
@@ -1521,17 +1520,17 @@
                     const lowerLink = link.toLowerCase(); 
                     let matchedPlatform = platforms.find(p => lowerLink.includes(p.name)) || { name: 'google' };
                     const a = document.createElement('a'); a.href = lowerLink.startsWith('http') ? link : `https://${link}`; a.target = '_blank';
+                    
                     if (matchedPlatform.name === 'google') {
-                        a.className = `h-10 px-4 rounded-full border border-gray-200 bg-white flex items-center justify-center gap-2 transition-all duration-300 hover:bg-gray-50 shadow-sm`;
-                        a.innerHTML = `<i class="fab fa-google text-blue-500 text-lg"></i><span class="font-bold text-gray-700 text-sm">Reviews</span><div class="flex text-yellow-400 text-xs gap-0.5"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></div>`;
+                        a.className = `w-10 h-10 rounded-full border border-gray-200 bg-white flex items-center justify-center text-blue-500 transition-all duration-300 hover:bg-gray-50 shadow-sm`;
+                        a.innerHTML = `<i class="fab fa-google text-lg"></i>`;
                     } else {
                         a.className = `w-10 h-10 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center ${matchedPlatform.color} transition-all duration-300 ${matchedPlatform.hover} hover:text-white shadow-sm`;
                         a.innerHTML = `<i class="${matchedPlatform.icon}"></i>`;
                     }
                     reviewIconsContainer.appendChild(a);
                 });
-                reviewArea.classList.remove('hidden'); reviewArea.classList.add('flex');
-            } else { reviewArea.classList.add('hidden'); reviewArea.classList.remove('flex'); }
+            }
 
             const relatedArea = document.getElementById('modalRelatedArea');
             const relatedSlider = document.getElementById('related-slider');
@@ -1594,12 +1593,7 @@
             setTimeout(() => { modal.classList.remove('flex'); modal.classList.add('hidden'); }, 300); 
         }
 
-        function toggleLike(event, id) {
-            event.stopPropagation(); const icon = event.currentTarget.querySelector('i');
-            if (likedItems.has(id)) { likedItems.delete(id); icon.classList.replace('fas', 'far'); icon.classList.remove('text-red-500'); } 
-            else { likedItems.add(id); icon.classList.replace('far', 'fas'); icon.classList.add('text-red-500'); }
-            localStorage.setItem('likedItems', JSON.stringify([...likedItems]));
-        }
+        
 
         function callPhone() { if(rawBranding.C) window.location.href = `tel:${rawBranding.C}`; }
 
@@ -2038,7 +2032,7 @@
                 const bgClass = item.isTodaySpecial ? 'bg-amber-50/60 border-amber-200' : 'bg-white border-gray-100';
                 let cardClasses = `menu-card ${bgClass} rounded-2xl overflow-hidden border shadow-sm flex flex-col h-full opacity-0 translate-y-4 relative group`;
                 card.className = cardClasses; card.style.animation = `fadeInUp 0.4s ease forwards ${delay}ms`; card.onclick = () => openModal(item.id);
-                const isLiked = likedItems.has(item.id);
+                
                 let cardCurrencyDisplay = getSmartCurrency(globalCurrency, "text-[10px] font-normal mx-0.5 text-gray-500");
                 const priceHtml = currentLang === 'en' ? `<span class="flex items-baseline">${cardCurrencyDisplay}<span>${item.price}</span></span>` : `<span class="flex items-baseline"><span>${item.price}</span>${cardCurrencyDisplay}</span>`;
                 let badgeHtml = '';
@@ -2047,12 +2041,12 @@
                 const urls = item.imgUrls || [item.img]; let imagesHtml = '';
                 urls.forEach(url => { imagesHtml += `<img src="${url}" loading="lazy" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; } }">`; });
                 card.innerHTML = `
-                    <button onclick="toggleLike(event, '${item.id}')" class="absolute top-2 start-2 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shadow-sm z-20 text-xs"><i class="${isLiked ? 'fas text-red-500' : 'far'} fa-heart"></i></button>
+                    
                     <div class="relative aspect-[4/3] overflow-hidden shrink-0 bg-gray-100 rounded-t-2xl"><div class="mini-img-slider flex w-full h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar" style="scroll-behavior: smooth;" data-img-count="${urls.length}">${imagesHtml}</div>${badgeHtml}</div>
                     <div class="p-2 sm:p-3 flex flex-col flex-grow">
                         <h4 class="text-[11px] sm:text-xs font-bold text-gray-900 leading-tight line-clamp-1 mb-1">${item.name}</h4>
                         <span class="font-extrabold text-red-600 whitespace-nowrap text-sm shrink-0 mb-1">${priceHtml}</span>
-                        <p class="text-[9px] sm:text-[10px] text-gray-500 line-clamp-2 mb-2 flex-grow">${item.desc}</p>
+                        
                         <div class="flex justify-between items-end mt-auto">
                             ${item.calories ? `<div class="flex items-center gap-1 text-[8px] font-bold text-orange-500 bg-orange-50 w-fit px-1.5 py-0.5 rounded"><i class="fas fa-fire"></i> ${item.calories} Cal</div>` : '<div></div>'}
                             <button onclick="event.stopPropagation(); toggleQuickCart('${item.id}')" class="quick-add-btn-${item.id} bg-orange-500 text-white w-6 h-6 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto"><i class="quick-add-icon-${item.id} fas fa-plus text-[10px] transition-transform duration-500 pointer-events-none"></i></button>
