@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karak Wa Karak Menu</title>
-  <link rel="manifest" href="https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/manifest.json">
+  <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ef4444">
     <link rel="apple-touch-icon" href="logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -629,7 +629,28 @@
         <i class="fas fa-arrow-up"></i>
     </button>
 
-    
+    <!-- NEW: Custom App Install Prompt -->
+    <div id="pwa-install-modal" class="fixed inset-0 z-[120] hidden items-end sm:items-center justify-center p-4 sm:p-6">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 transition-opacity duration-300" id="pwa-backdrop" onclick="closeInstallPrompt()"></div>
+        
+        <div class="relative z-10 bg-white rounded-3xl p-6 w-full max-w-sm shadow-2xl transform translate-y-full sm:translate-y-0 sm:scale-95 opacity-0 transition-all duration-300 flex flex-col items-center text-center" id="pwa-install-card">
+            <button onclick="closeInstallPrompt()" class="absolute top-4 end-4 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="w-20 h-20 rounded-2xl bg-white shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] p-2 mb-4 border border-gray-100">
+                <img id="pwa-popup-logo" src="logo.png" class="w-full h-full object-cover rounded-xl" onerror="this.src='https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'">
+            </div>
+            
+            <h3 class="text-xl font-black text-gray-900 mb-2">Install Our App!</h3>
+            <p class="text-sm font-medium text-gray-500 mb-6 leading-relaxed">Add our menu to your home screen for faster ordering, offline access, and a better experience.</p>
+            
+            <button id="pwa-install-btn" class="w-full bg-red-500 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-red-600 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mb-2">
+                <i class="fas fa-download"></i> Install App
+            </button>
+            <button onclick="closeInstallPrompt()" class="text-xs font-bold text-gray-400 hover:text-gray-600 py-2 transition-colors">Maybe Later</button>
+        </div>
+    </div>
 
     <!-- Cart / Bill Modal -->
     <div id="cartModal" class="fixed inset-0 z-[90] hidden items-end md:items-center justify-center p-0 md:p-6">
@@ -888,6 +909,16 @@
         function toggleLanguage() {
             currentLang = currentLang === 'en' ? 'ar' : 'en';
             document.getElementById('lang-text').textContent = currentLang === 'en' ? 'AR' : 'EN';
+            
+            // NEW: Clear all active filters and search when language changes
+            selectedMainCategories.clear();
+            selectedSubCategories.clear();
+            selectedQuickAccess.clear();
+            searchQuery = '';
+            
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+
             closeModal();
             processDataForCurrentLang();
         }
@@ -2144,7 +2175,8 @@ function renderQuickAccessFilters() {
 
                 container.innerHTML += `
                     <div class="flex items-center gap-2 bg-white p-2 rounded-lg mb-2 shadow-sm border border-gray-100">
-                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="this.onerror=null; this.src='${rawBranding.smartLogo || 'logo.png'}';">
+                        <!-- NEW: Added the smart fallback logic to the cart image -->
+                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-1'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; }">
 
                         <div class="flex-grow min-w-0">
                             <h4 class="font-bold text-gray-800 text-xs leading-tight truncate">${item.name} ${variantBadge}</h4>
@@ -2677,6 +2709,57 @@ function renderQuickAccessFilters() {
                     .catch(err => console.error('PWA Registration failed:', err));
             });
         }
+
+// --- CUSTOM PWA INSTALL LOGIC ---
+        let deferredPrompt;
+        const installModal = document.getElementById('pwa-install-modal');
+        const installBackdrop = document.getElementById('pwa-backdrop');
+        const installCard = document.getElementById('pwa-install-card');
+        const installBtn = document.getElementById('pwa-install-btn');
+
+        // 1. Catch the browser's native install trigger
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); // Stop the default browser bar from showing
+            deferredPrompt = e; // Save it for our custom button
+            
+            // Wait 4 seconds before showing the popup so the user sees the menu first
+            setTimeout(showInstallPrompt, 7000); 
+        });
+
+        function showInstallPrompt() {
+            if(rawBranding && rawBranding.smartLogo) {
+                document.getElementById('pwa-popup-logo').src = rawBranding.smartLogo;
+            }
+            installModal.classList.remove('hidden'); installModal.classList.add('flex');
+            void installModal.offsetWidth; // Trigger reflow
+            installBackdrop.classList.replace('opacity-0', 'opacity-100');
+            installCard.classList.remove('translate-y-full', 'sm:scale-95', 'opacity-0');
+            installCard.classList.add('translate-y-0', 'sm:scale-100', 'opacity-100');
+        }
+
+        function closeInstallPrompt() {
+            installBackdrop.classList.replace('opacity-100', 'opacity-0');
+            installCard.classList.remove('translate-y-0', 'sm:scale-100', 'opacity-100');
+            installCard.classList.add('translate-y-full', 'sm:scale-95', 'opacity-0');
+            setTimeout(() => { installModal.classList.remove('flex'); installModal.classList.add('hidden'); }, 300);
+        }
+
+        // 2. When the user clicks your custom Install button
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt(); // Show the official Google/Android popup
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') { console.log('User installed the app!'); }
+                deferredPrompt = null; // Clear it out
+                closeInstallPrompt(); // Hide our custom card
+            }
+        });
+
+        // 3. Confirm installation is finished
+        window.addEventListener('appinstalled', () => {
+            closeInstallPrompt();
+            deferredPrompt = null;
+        });
 
         window.addEventListener('pageshow', function (event) { if (event.persisted) { window.location.reload(); } });
     </script>
