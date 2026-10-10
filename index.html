@@ -2772,7 +2772,7 @@ function renderQuickAccessFilters() {
             // NEW: If they just closed it but haven't installed it yet, ask again in 25 seconds
             if (deferredPrompt) {
                 clearTimeout(installPromptTimer);
-                installPromptTimer = setTimeout(showInstallPrompt, 25000);
+                installPromptTimer = setTimeout(showInstallPrompt, 150000);
             }
         }
 
