@@ -73,16 +73,19 @@
             width: 104px;
             height: 90px;
             background: #ffffff;
-            border: 2px solid #e5e7eb; /* Stroke border */
+            border: 2px solid #e5e7eb; 
             border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             transform: translateY(40px) rotate(-10deg) scale(0.92);
-            animation: floatIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
             box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
             overflow: hidden;
+        }
+        /* NEW: Animation only runs when start-animation class is added */
+        #app-loader.start-animation .loader-logo-box {
+            animation: floatIn 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         }
         .loader-logo-box img {
             width: 100%;
@@ -106,17 +109,14 @@
         .loader-bar span {
             position: absolute;
             inset: 0;
-            background: #ef4444; /* Brand Red */
+            background: #ef4444; 
             border-radius: inherit;
             transform-origin: left center;
             transform: scaleX(0);
+        }
+        /* NEW: Animation only runs when start-animation class is added */
+        #app-loader.start-animation .loader-bar span {
             animation: fillBar 3s linear forwards;
-        }
-        html[dir="rtl"] .loader-bar span {
-            transform-origin: right center;
-        }
-        @keyframes fillBar {
-            to { transform: scaleX(1); }
         }
 
     </style>
@@ -198,9 +198,9 @@
 
             <!-- NEW: Quick Access Categories (Circles) -->
             <div id="quick-access-wrapper" class="overflow-x-auto hide-scrollbar px-1 pb-2 snap-x w-full mt-1 border-t border-gray-100 pt-3 hidden">
-                <div class="flex flex-col gap-3 min-w-full w-max">
-                    <div id="quick-row-1" class="flex gap-4"></div>
-                    <div id="quick-row-2" class="flex gap-4"></div>
+                <div class="flex flex-col items-center gap-3 min-w-full w-max mx-auto">
+                    <div id="quick-row-1" class="flex justify-center gap-4 w-full"></div>
+                    <div id="quick-row-2" class="flex justify-center gap-4 w-full"></div>
                 </div>
             </div>
 
@@ -794,12 +794,6 @@
                 applySystemSetup();
                 renderSocialMedia();
                 
-                // Wait for the full 3s CSS animation to finish before fading out
-                setTimeout(() => {
-                    const loader = document.getElementById('app-loader');
-                    if (loader) loader.classList.add('hide');
-                }, 3000);
-                
             } catch (error) {
                 console.error("JSON Initialization Error:", error);
                 
@@ -895,12 +889,44 @@
             document.getElementById('f-address').textContent = rawBranding.H || "--";
             if(rawBranding.I) mapEl.href = rawBranding.I;
 
+            // Central function to start the loader animation & timer
+            function startLoaderAnimation() {
+                const loader = document.getElementById('app-loader');
+                if (!loader || loader.classList.contains('start-animation')) return;
+                loader.classList.add('start-animation');
+                
+                // Hide the loader exactly 3 seconds AFTER the animation begins
+                setTimeout(() => { 
+                    loader.classList.add('hide'); 
+                }, 3000);
+            }
+
             if(rawBranding.smartLogo) {
                 // Top Nav Logo
                 document.getElementById('default-logo-icon').classList.add('hidden');
                 const imgEl = document.getElementById('brand-logo-img');
                 imgEl.src = rawBranding.smartLogo;
                 imgEl.classList.remove('hidden');
+
+                // Loading Screen Logo
+                const loaderIcon = document.getElementById('loader-default-icon');
+                const loaderImg = document.getElementById('loader-brand-img');
+                if (loaderIcon && loaderImg) {
+                    loaderIcon.classList.add('hidden');
+                    
+                    // WAIT for the image to fully download before starting the animation
+                    loaderImg.onload = startLoaderAnimation;
+                    loaderImg.onerror = startLoaderAnimation; // Failsafe: start anyway if image link breaks
+                    
+                    // Assigning the src starts the download
+                    loaderImg.src = rawBranding.smartLogo;
+                    loaderImg.classList.remove('hidden');
+                } else {
+                    startLoaderAnimation();
+                }
+            } else {
+                startLoaderAnimation(); // No logo provided, start immediately
+            }
 
                 // Loading Screen Logo
                 const loaderIcon = document.getElementById('loader-default-icon');
@@ -1387,19 +1413,17 @@ function renderQuickAccessFilters() {
                 }
             }
 
+            // Smoothly show floating buttons after scrolling past the hero header and 1-2 categories (approx 600px)
             const backToTopBtn = document.getElementById('back-to-top-btn');
             const gameBtn = document.getElementById('game-trigger-btn');
-            if (backToTopBtn) { backToTopBtn.classList.add('opacity-0', 'pointer-events-none'); backToTopBtn.classList.remove('opacity-100'); }
-            if (gameBtn && isGameTriggerEnabled) { gameBtn.classList.add('opacity-0', 'pointer-events-none'); gameBtn.classList.remove('opacity-100'); }
-
-            clearTimeout(uiScrollTimeout);
-            uiScrollTimeout = setTimeout(() => {
-                const totalPageHeight = document.documentElement.scrollHeight - window.innerHeight;
-                const scrollPercentage = (currentScrollY / totalPageHeight) * 100;
-                if (backToTopBtn && scrollPercentage >= 50) { backToTopBtn.classList.remove('opacity-0', 'pointer-events-none'); backToTopBtn.classList.add('opacity-100'); }
+            
+            if (currentScrollY > 600) {
+                if (backToTopBtn) { backToTopBtn.classList.remove('opacity-0', 'pointer-events-none'); backToTopBtn.classList.add('opacity-100'); }
                 if (gameBtn && isGameTriggerEnabled) { gameBtn.classList.remove('opacity-0', 'pointer-events-none'); gameBtn.classList.add('opacity-100'); }
-                uiScrollTimeout = null;
-            }, 1000); 
+            } else {
+                if (backToTopBtn) { backToTopBtn.classList.add('opacity-0', 'pointer-events-none'); backToTopBtn.classList.remove('opacity-100'); }
+                if (gameBtn && isGameTriggerEnabled) { gameBtn.classList.add('opacity-0', 'pointer-events-none'); gameBtn.classList.remove('opacity-100'); }
+            } 
         }, {passive: true});
 
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }  
@@ -1412,16 +1436,19 @@ function renderQuickAccessFilters() {
             
             if (selectedMainCategories.size > 0) { filteredData = filteredData.filter(i => selectedMainCategories.has(i.mainCat)); }
             if (selectedSubCategories.size > 0) { filteredData = filteredData.filter(i => selectedSubCategories.has(i.subCat)); }
-            if (selectedQuickAccess.size > 0) { filteredData = filteredData.filter(i => selectedQuickAccess.has(i.quickCat)); } // NEW
+            if (selectedQuickAccess.size > 0) { filteredData = filteredData.filter(i => selectedQuickAccess.has(i.quickCat)); }
+            
             if (searchQuery) {
                 const searchWords = searchQuery.toLowerCase().split(' ').filter(word => word.trim() !== '');
                 filteredData = filteredData.filter(i => {
-                    const searchableText = `${i.name} ${i.desc} ${i.mainCat} ${i.subCat}`.toLowerCase();
+                    // Added i.quickCat to searchable text
+                    const searchableText = `${i.name} ${i.desc} ${i.mainCat} ${i.subCat} ${i.quickCat}`.toLowerCase();
                     return searchWords.every(word => searchableText.includes(word));
                 });
             }
 
-            if (selectedMainCategories.size === 0 && selectedSubCategories.size === 0 && !searchQuery) {
+            // Only show Today's Special at the top if NO filters are active
+            if (selectedMainCategories.size === 0 && selectedSubCategories.size === 0 && selectedQuickAccess.size === 0 && !searchQuery) {
                 const specials = activeMenuData.filter(i => i.isTodaySpecial);
                 if (specials.length > 0) {
                     hasItems = true; specials.sort((a, b) => a.order - b.order);
@@ -1431,13 +1458,20 @@ function renderQuickAccessFilters() {
 
             const grouped = {};
             filteredData.forEach(item => {
-                if(!grouped[item.subCat]) grouped[item.subCat] = []; grouped[item.subCat].push(item);
+                // NEW: If a Quick Access circle is clicked, group all items under the Quick Access Name!
+                // Otherwise, group them by their normal Sub Category.
+                const groupName = selectedQuickAccess.size > 0 ? item.quickCat : item.subCat;
+                
+                if(!grouped[groupName]) grouped[groupName] = []; 
+                grouped[groupName].push(item);
             });
 
             let categoryCount = 0; 
-            for (const subCat in grouped) {
-                hasItems = true; const items = grouped[subCat]; items.sort((a, b) => a.order - b.order);
-                renderSection(subCat, items, container, false);
+            for (const sectionTitle in grouped) {
+                hasItems = true; 
+                const items = grouped[sectionTitle]; 
+                items.sort((a, b) => a.order - b.order);
+                renderSection(sectionTitle, items, container, false);
                 categoryCount++;
 
                 if (window.rawBrandRows && window.rawBrandRows.length > categoryCount) {
