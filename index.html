@@ -607,7 +607,7 @@
                 <h2 id="category-page-title" class="text-xl font-bold text-gray-900 truncate">Category Name</h2>
             </div>
             <div class="flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6" style="-webkit-overflow-scrolling: touch;">
-                <div id="category-page-grid" class="grid grid-cols-2 gap-3 sm:gap-4"></div>
+                <div id="category-page-grid" class="grid grid-cols-3 gap-2 sm:gap-4"></div>
             </div>
         </div>
     </div>
@@ -637,14 +637,20 @@
         let globalCurrency = ""; 
         const newRiyalIcon = `<svg class="inline-block w-[0.8em] h-[0.8em] mx-0.5 fill-current" viewBox="0 0 202.03 220.76" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M342.14,140.96l2.7,2.54v-7.72c0-17-11.92-30.84-26.56-30.84h-23.41C278.49,36.7,222.69,0,139.68,0c-52.86,0-59.65,0-109.71,0,0,0,15.03,12.63,15.03,52.4v52.58h-27.68c-5.38,0-10.43-2.08-14.61-6.01l-2.7-2.54v7.72c0,17.01,11.92,30.84,26.56,30.84h18.44s0,29.99,0,29.99h-27.68c-5.38,0-10.43-2.07-14.61-6.01l-2.7-2.54v7.71c0,17,11.92,30.82,26.56,30.82h18.44s0,54.89,0,54.89c0,38.65-15.03,50.06-15.03,50.06h109.71c85.62,0,139.64-36.96,155.38-104.98h32.46c5.38,0,10.43,2.07,14.61,6l2.7,2.54v-7.71c0-17-11.92-30.83-26.56-30.83h-18.9c.32-4.88.49-9.87.49-15s-.18-10.11-.51-14.99h28.17c5.37,0,10.43,2.07,14.61,6.01ZM89.96,15.01h45.86c61.7,0,97.44,27.33,108.1,89.94l-153.96.02V15.01ZM136.21,284.93h-46.26v-89.98l153.87-.02c-9.97,56.66-42.07,88.38-107.61,90ZM247.34,149.96c0,5.13-.11,10.13-.34,14.99l-157.04.02v-29.99l157.05-.02c.22,4.84.33,9.83.33,15Z"/></svg>`;
 
+        // NEW: Your custom Dirham SVG injected with Tailwind sizing classes
+        const newDirhamIcon = `<svg class="inline-block w-[0.8em] h-[0.8em] mx-0.5 fill-current" viewBox="0 0 344.84 299.91" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M342.14,140.96l2.7,2.54v-7.72c0-17-11.92-30.84-26.56-30.84h-23.41C278.49,36.7,222.69,0,139.68,0c-52.86,0-59.65,0-109.71,0,0,0,15.03,12.63,15.03,52.4v52.58h-27.68c-5.38,0-10.43-2.08-14.61-6.01l-2.7-2.54v7.72c0,17.01,11.92,30.84,26.56,30.84h18.44s0,29.99,0,29.99h-27.68c-5.38,0-10.43-2.07-14.61-6.01l-2.7-2.54v7.71c0,17,11.92,30.82,26.56,30.82h18.44s0,54.89,0,54.89c0,38.65-15.03,50.06-15.03,50.06h109.71c85.62,0,139.64-36.96,155.38-104.98h32.46c5.38,0,10.43,2.07,14.61,6l2.7,2.54v-7.71c0-17-11.92-30.83-26.56-30.83h-18.9c.32-4.88.49-9.87.49-15s-.18-10.11-.51-14.99h28.17c5.37,0,10.43,2.07,14.61,6.01ZM89.96,15.01h45.86c61.7,0,97.44,27.33,108.1,89.94l-153.96.02V15.01ZM136.21,284.93h-46.26v-89.98l153.87-.02c-9.97,56.66-42.07,88.38-107.61,90ZM247.34,149.96c0,5.13-.11,10.13-.34,14.99l-157.04.02v-29.99l157.05-.02c.22,4.84.33,9.83.33,15Z"/></svg>`;
+
         function getSmartCurrency(currStr, customClass = "") {
             const c = String(currStr).trim().toLowerCase();
             if (c === 'sr' || c === 'sar') return newRiyalIcon; 
+            
+            // NEW: Maps AED to your custom SVG instead of text
+            if (c === 'aed' || c === 'dhs' || c === 'dirham') return newDirhamIcon; 
+            
             if (c === 'dollar' || c === 'usd') return `<span class="${customClass}">$</span>`;
             if (c === 'euro' || c === 'eur') return `<span class="${customClass}">€</span>`;
             if (c === 'pound' || c === 'gbp') return `<span class="${customClass}">£</span>`;
             if (c === 'inr' || c === 'rupee') return `<span class="${customClass}">₹</span>`;
-            if (c === 'aed') return `<span class="${customClass}">د.إ</span>`;
             return `<span class="${customClass}">${currStr}</span>`; 
         }
 
@@ -1295,7 +1301,7 @@
             if (isHighlight) {
                 const rowClass = items.length > 20 ? 'grid-rows-2' : 'grid-rows-1';
                 grid.className = `grid ${rowClass} grid-flow-col gap-3 sm:gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x snap-mandatory`;
-            } else { grid.className = "grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6"; }
+            } else { grid.className = "grid grid-cols-3 lg:grid-cols-5 md:grid-cols-4 gap-2 sm:gap-4"; }
 
             items.forEach((item, index) => {
                 const delay = index * 30; const card = document.createElement('div');
@@ -1303,7 +1309,17 @@
                 let cardClasses = `menu-card ${bgClass} rounded-2xl overflow-hidden border shadow-sm flex flex-col h-full opacity-0 translate-y-4 relative group`;
                 
                 if (isHighlight) { cardClasses += ' w-[40vw] sm:w-[220px] snap-start shrink-0'; } 
-                else { if (index === items.length - 1 && items.length % 2 !== 0) { cardClasses += ' col-span-2 md:col-span-1'; } }
+                else { 
+                    // 3-Column stretch logic for the last item
+                    if (index === items.length - 1) {
+                        const remainder = items.length % 3;
+                        if (remainder === 1) {
+                            cardClasses += ' col-span-3 md:col-span-1'; // Alone in the last row, stretch full
+                        } else if (remainder === 2) {
+                            cardClasses += ' col-span-2 md:col-span-1'; // 2 items in the last row, stretch the last one to fill
+                        }
+                    } 
+                }
                 
                 card.className = cardClasses; card.style.animation = `fadeInUp 0.4s ease forwards ${delay}ms`;
                 card.onclick = () => openModal(item.id);
@@ -1347,7 +1363,7 @@
                         <p class="text-xs text-gray-500 line-clamp-2 mt-1 mb-2 flex-grow">${item.desc}</p>
                         <div class="flex justify-between items-end mt-1">
                             ${item.calories ? `<div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-orange-500 bg-orange-50 w-fit px-2 py-1 rounded-md"><i class="fas fa-fire"></i> ${item.calories} Cal</div>` : '<div></div>'}
-                            <button onclick="${clickAction}" class="quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300 relative z-10 pointer-events-auto">
+                            <button onclick="${clickAction}" class="quick-add-btn-${item.id} bg-orange-500 text-white w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300 relative z-10 pointer-events-auto">
                                 <i class="quick-add-icon-${item.id} fas ${btnIcon} text-sm transition-transform duration-500 pointer-events-none"></i>
                             </button>
                         </div>
@@ -1467,7 +1483,7 @@
                     ? `<span class="text-red-400 flex items-baseline justify-end">${modalCurrencyDisplay}<span class="text-3xl text-red-500">${item.price}</span></span>` 
                     : `<span class="text-red-400 flex items-baseline justify-end"><span class="text-3xl text-red-500">${item.price}</span>${modalCurrencyDisplay}</span>`;
             }
-            document.getElementById('modalPrice').innerHTML = priceHtml;
+            
 
             if(item.calories) { document.getElementById('modalCalories').textContent = item.calories; document.getElementById('modalCalories').parentElement.classList.remove('hidden'); document.getElementById('modalCalories').parentElement.classList.add('inline-flex'); } 
             else { document.getElementById('modalCalories').parentElement.classList.add('hidden'); document.getElementById('modalCalories').parentElement.classList.remove('inline-flex'); }
