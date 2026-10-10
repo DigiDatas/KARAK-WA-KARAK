@@ -640,7 +640,7 @@
             </button>
             
             <div class="w-20 h-20 rounded-2xl bg-white shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] p-2 mb-4 border border-gray-100">
-                <img id="pwa-popup-logo" src="logo.png" class="w-full h-full object-cover rounded-xl" onerror="this.src='https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'">
+                <img id="pwa-popup-logo" src="logo.png" class="w-full h-full object-cover rounded-xl" onerror="this.src='https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'">
             </div>
             
             <h3 class="text-xl font-black text-gray-900 mb-2">Install Our App!</h3>
@@ -804,7 +804,7 @@
         async function init() {
             try {
                 // 1. Fetch the raw Excel file instead of JSON
-                const fileUrl = "https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/MenuMasterData.xlsx?v=" + new Date().getTime();
+                const fileUrl = "https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/MenuMasterData.xlsx?v=" + new Date().getTime();
                 const response = await fetch(fileUrl, { cache: "no-store", pragma: "no-cache" });
                 if (!response.ok) throw new Error("Could not fetch Excel file");
                 
@@ -1153,7 +1153,7 @@
                 let quickImg = String(row.E || "").trim();
                 const v = "?v=" + new Date().getTime(); 
                 if (quickImg && !quickImg.startsWith('http')) {
-                    quickImg = `https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/images/ItemImages/${quickImg}${quickImg.includes('?') ? '' : v}`;
+                    quickImg = `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${quickImg}${quickImg.includes('?') ? '' : v}`;
                 }
 
                 if (quickCat && quickImg) {
@@ -1178,7 +1178,7 @@
                         }
                     }
                 } else {
-                    const brandLogo = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png';
+                    const brandLogo = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png';
                     
                     groupedItems[rawId] = {
                         id: rawId,
@@ -1200,7 +1200,7 @@
                                 urls = String(row.M).split(',').map(u => {
                                     let clean = u.trim();
                                     if (!clean) return null;
-                                    if (!clean.startsWith('http')) return `https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/images/ItemImages/${clean}${clean.includes('?') ? '' : v}`;
+                                    if (!clean.startsWith('http')) return `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${clean}${clean.includes('?') ? '' : v}`;
                                     return clean;
                                 }).filter(u => u !== null);
                             } else {
@@ -1211,7 +1211,7 @@
                         img: (() => {
                             if (row.M) {
                                 let first = String(row.M).split(',')[0].trim();
-                                return first.startsWith('http') ? first : `https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/images/ItemImages/${first}`;
+                                return first.startsWith('http') ? first : `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${first}`;
                             }
                             return brandLogo;
                         })(),
@@ -1563,7 +1563,7 @@ function renderQuickAccessFilters() {
                     if (cellValue) {
                         const bannerUrls = String(cellValue).split(',').map(u => {
                             let clean = u.trim(); if (!clean) return null;
-                            if (!clean.startsWith('http')) { return `https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/images/banner/${clean}`; }
+                            if (!clean.startsWith('http')) { return `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/banner/${clean}`; }
                             return clean; 
                         }).filter(u => u !== null);
 
@@ -1647,7 +1647,7 @@ function renderQuickAccessFilters() {
                 }
 
                 const urls = item.imgUrls || [item.img]; let imagesHtml = '';
-                urls.forEach(url => { imagesHtml += `<img src="${url}" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500 ${imgFilter}" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'}'; } }">`; });
+                urls.forEach(url => { imagesHtml += `<img src="${url}" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500 ${imgFilter}" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; } }">`; });
                 if (urls.length > 1) { imagesHtml += `<img src="${urls[0]}" data-is-clone="true" alt="Image Clone" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500 ${imgFilter}">`; }
 
                 // Lock click actions if out of stock
@@ -1692,7 +1692,7 @@ function renderQuickAccessFilters() {
 
             const urls = item.imgUrls || [item.img];
             urls.forEach((url, i) => {
-                const imgHtml = `<img src="${url}" class="w-full h-full object-cover shrink-0 snap-center" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); let d = document.getElementById('dot-${i}'); if(d) d.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-8'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'}'; } }">`;
+                const imgHtml = `<img src="${url}" class="w-full h-full object-cover shrink-0 snap-center" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); let d = document.getElementById('dot-${i}'); if(d) d.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-8'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; } }">`;
                 slider.insertAdjacentHTML('beforeend', imgHtml);
                 dots.insertAdjacentHTML('beforeend', `<div id="dot-${i}" class="modal-dot w-2 h-2 rounded-full transition-all duration-300 ${i===0 ? 'bg-red-500 scale-125' : 'bg-white/80 shadow-sm'}"></div>`);
             });
@@ -1879,7 +1879,7 @@ function renderQuickAccessFilters() {
                         relatedSlider.innerHTML += `
                             <div class="relative w-[28vw] sm:w-[110px] flex-shrink-0 snap-start ${cardBg} border rounded-xl p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow group">
                                 <div onclick="openModal('${relItem.id}')" class="relative">
-                                    <img src="${relItem.img}" class="w-full h-16 object-cover rounded-lg mb-1.5 pointer-events-none ${imgFilter}" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'}'; }">
+                                    <img src="${relItem.img}" class="w-full h-16 object-cover rounded-lg mb-1.5 pointer-events-none ${imgFilter}" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; }">
                                     ${badgeHtml}
                                     <h4 class="text-[10px] font-bold ${textColor} line-clamp-1 pointer-events-none">${relItem.name}</h4>
                                 </div>
@@ -2238,7 +2238,7 @@ function renderQuickAccessFilters() {
                 container.innerHTML += `
                     <div class="flex items-center gap-2 bg-white p-2 rounded-lg mb-2 shadow-sm border border-gray-100">
                         <!-- NEW: Added the smart fallback logic to the cart image -->
-                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-1'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'}'; }">
+                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-1'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; }">
 
                         <div class="flex-grow min-w-0">
                             <h4 class="font-bold text-gray-800 text-xs leading-tight truncate">${item.name} ${variantBadge}</h4>
@@ -2411,7 +2411,7 @@ function renderQuickAccessFilters() {
                 if(item.isTodaySpecial) badgeHtml = `<div class="absolute top-2 end-2 bg-gradient-to-r from-orange-400 to-red-500 px-2 py-1 rounded-lg text-[8px] sm:text-[10px] font-bold text-white shadow-sm z-10"><i class="fas fa-star text-[8px]"></i> Special</div>`;
                 else if(item.video) badgeHtml = `<div class="absolute top-2 end-2 bg-black/70 backdrop-blur px-2 py-1 rounded-lg text-[8px] sm:text-[10px] font-bold text-white shadow-sm flex items-center gap-1 z-10"><i class="fas fa-play"></i> Video</div>`;
                 const urls = item.imgUrls || [item.img]; let imagesHtml = '';
-                urls.forEach(url => { imagesHtml += `<img src="${url}" loading="lazy" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'}'; } }">`; });
+                urls.forEach(url => { imagesHtml += `<img src="${url}" loading="lazy" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; } }">`; });
                 card.innerHTML = `
                     
                     <div class="relative aspect-[4/3] overflow-hidden shrink-0 bg-gray-100 rounded-t-2xl"><div class="mini-img-slider flex w-full h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar" style="scroll-behavior: smooth;" data-img-count="${urls.length}">${imagesHtml}</div>${badgeHtml}</div>
@@ -2475,7 +2475,7 @@ function renderQuickAccessFilters() {
                     files.forEach(file => { if (file.startsWith('http')) validFlashCards.push(file); });
                 }
             });
-            const baseUrl = 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/images/FlashCard/FlashCard';
+            const baseUrl = 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/FlashCard/FlashCard';
             for (let i = 1; i <= 15; i++) { probeImageExtensions(`${baseUrl}${String(i).padStart(2, '0')}`); }
             buildPromo();
         }
@@ -2664,7 +2664,7 @@ function renderQuickAccessFilters() {
         });
 
         function openBrandModal() {
-            const img = document.getElementById('brandModalImage'); img.src = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/logo.png'; 
+            const img = document.getElementById('brandModalImage'); img.src = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'; 
             document.getElementById('brandModalTitle').textContent = rawBranding.B || "Our Restaurant";
             const defaultDescEn = "Welcome to our restaurant! We pride ourselves on serving delicious, high-quality food made with fresh ingredients and authentic recipes.";
             const defaultDescAr = "مرحباً بكم في مطعمنا! نفخر بتقديم أشهى المأكولات عالية الجودة المحضرة بمكونات طازجة ووصفات أصيلة.";
@@ -2772,7 +2772,7 @@ function renderQuickAccessFilters() {
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('https://raw.githubusercontent.com/DigiDatas/usthad-azeezia-menu/main/sw.js')
+                navigator.serviceWorker.register('https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/sw.js')
                     .then(reg => {
                         console.log('PWA Service Worker registered successfully!'); reg.update();
                         reg.onupdatefound = () => {
