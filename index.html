@@ -393,6 +393,12 @@
                     </div>
                 </div>
 
+<!-- NEW: Variant / Size Selector -->
+                <div id="modalVariantArea" class="hidden mb-4 border-t border-gray-100 pt-3">
+                    <h4 class="font-bold text-gray-700 text-sm mb-2 flex items-center gap-2"><i class="fas fa-layer-group text-red-500"></i> <span id="label-variant">Select Option</span></h4>
+                    <div id="modalVariantOptions" class="flex flex-wrap gap-2"></div>
+                </div>
+
                 <!-- NEW: Expandable Recipe Area -->
                 <div id="modalRecipeArea" class="hidden mb-4 bg-yellow-50 border border-yellow-100 rounded-xl p-4 cursor-pointer relative transition-all" onclick="toggleRecipe()">
                     <h4 class="font-bold text-yellow-800 text-sm mb-1 flex items-center gap-2"><i class="fas fa-book-open"></i> <span id="label-recipe">Recipe / Ingredients</span></h4>
@@ -936,56 +942,80 @@
         }
 
         function formatMenuData(rawSource) {
-            activeMenuData = [];
+            const groupedItems = {};
             mainCategories = [];
             allSubCategories = []; 
-            const subCatGroups = {};
 
             rawSource.forEach(row => {
-                if(!row.B || !row.D) return;
+                if(!row.B || !row.F) return; // Note: row.F is now Name
 
-                const safeId = row.A ? String(row.A).trim() : 'item-' + Math.random().toString(36).substr(2, 9);
-                const brandLogo = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png';
+                const rawId = row.A ? String(row.A).trim() : 'item-' + Math.random().toString(36).substr(2, 9);
+                const isVariable = String(row.Q || "").trim().toLowerCase() === 'true';
+                const price = parseFloat(row.K) || 0; // row.K is Price
 
-                const item = {
-                    id: safeId,
-                    mainCat: String(row.B).trim(),
-                    subCat: String(row.C || "Other").trim(),
-                    name: String(row.D).trim(),
-                    order: parseInt(row.E) || 999, 
-                    price: row.F || 0,
-                    desc: row.G || "",
-                    calories: row.H || "",
-                    recipe: row.I || "",
-                    isTodaySpecial: String(row.J || "").trim().toLowerCase() === 'today special',
-                    imgUrls: (() => {
-                        let urls = [];
-                        const v = "?v=" + new Date().getTime(); 
-                        if (row.K) {
-                            urls = String(row.K).split(',').map(u => {
-                                let clean = u.trim();
-                                if (!clean) return null;
-                                if (!clean.startsWith('http')) return `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${clean}${clean.includes('?') ? '' : v}`;
-                                return clean;
-                            }).filter(u => u !== null);
-                        } else {
-                            urls.push(brandLogo);
-                        }
-                        return [...new Set(urls)];
-                    })(),
-                    img: (() => {
-                        if (row.K) {
-                            let first = String(row.K).split(',')[0].trim();
-                            return first.startsWith('http') ? first : `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${first}`;
-                        }
-                        return brandLogo;
-                    })(),
-                    video: row.L || "",
-                    reviewLinks: row.M || "",
-                    flashCards: row.N || "" 
+                const variantObj = {
+                    variantName: String(row.G || "Regular").trim(), // row.G is Size/Variant
+                    price: price
                 };
 
-                activeMenuData.push(item);
+                if (groupedItems[rawId]) {
+                    if (isVariable) {
+                        groupedItems[rawId].variants.push(variantObj);
+                        if (price < groupedItems[rawId].price) {
+                            groupedItems[rawId].price = price; // Keep smallest price as base
+                        }
+                    }
+                } else {
+                    const brandLogo = rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png';
+                    
+                    groupedItems[rawId] = {
+                        id: rawId,
+                        mainCat: String(row.B).trim(),
+                        subCat: String(row.C || "Other").trim(),
+                        name: String(row.F).trim(),
+                        isVariable: isVariable,
+                        variants: isVariable ? [variantObj] : [],
+                        order: parseInt(row.I) || 999, // row.I is Order
+                        price: price, 
+                        desc: row.L || "", // row.L is Desc
+                        calories: row.J || "", // row.J is Calories
+                        recipe: "", // Removed from new mapping
+                        isTodaySpecial: String(row.H || "").trim().toLowerCase() === 'today special' || String(row.H || "").trim().toLowerCase() === 'true', // row.H is Special
+                        imgUrls: (() => {
+                            let urls = [];
+                            const v = "?v=" + new Date().getTime(); 
+                            if (row.M) { // row.M is Image URL
+                                urls = String(row.M).split(',').map(u => {
+                                    let clean = u.trim();
+                                    if (!clean) return null;
+                                    if (!clean.startsWith('http')) return `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${clean}${clean.includes('?') ? '' : v}`;
+                                    return clean;
+                                }).filter(u => u !== null);
+                            } else {
+                                urls.push(brandLogo);
+                            }
+                            return [...new Set(urls)];
+                        })(),
+                        img: (() => {
+                            if (row.M) {
+                                let first = String(row.M).split(',')[0].trim();
+                                return first.startsWith('http') ? first : `https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/images/ItemImages/${first}`;
+                            }
+                            return brandLogo;
+                        })(),
+                        video: row.N || "", // row.N is Video
+                        reviewLinks: row.O || "", // row.O is Review/Map
+                        flashCards: row.P || "" // row.P is FlashCards
+                    };
+                }
+            });
+
+            activeMenuData = Object.values(groupedItems);
+            
+            activeMenuData.forEach(item => {
+                if (item.isVariable) {
+                    item.variants.sort((a, b) => a.price - b.price); // Sort variants lowest to highest
+                }
                 if(!mainCategories.includes(item.mainCat)) mainCategories.push(item.mainCat);
                 if(!allSubCategories.includes(item.subCat)) allSubCategories.push(item.subCat);
             });
@@ -1280,7 +1310,12 @@
 
                 const isLiked = likedItems.has(item.id);
                 let cardCurrencyDisplay = getSmartCurrency(globalCurrency, "text-[10px] sm:text-xs font-normal mx-0.5 text-gray-500");
-                const priceHtml = currentLang === 'en' ? `<span class="flex items-baseline">${cardCurrencyDisplay}<span>${item.price}</span></span>` : `<span class="flex items-baseline"><span>${item.price}</span>${cardCurrencyDisplay}</span>`;
+                
+                // NEW: Show "Starts at" if it's a variable item
+                const pricePrefix = item.isVariable ? (currentLang === 'en' ? 'from ' : 'يبدأ من ') : '';
+                const priceHtml = currentLang === 'en' 
+                    ? `<span class="flex items-baseline text-[9px] sm:text-[10px] text-gray-400 font-normal mr-1">${pricePrefix}</span><span class="flex items-baseline">${cardCurrencyDisplay}<span>${item.price}</span></span>` 
+                    : `<span class="flex items-baseline text-[9px] sm:text-[10px] text-gray-400 font-normal ml-1">${pricePrefix}</span><span class="flex items-baseline"><span>${item.price}</span>${cardCurrencyDisplay}</span>`;
 
                 let badgeHtml = '';
                 if(item.isTodaySpecial) badgeHtml = `<div class="absolute top-2 end-2 bg-gradient-to-r from-orange-400 to-red-500 px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold text-white shadow-sm z-10"><i class="fas fa-star text-[10px]"></i> Special</div>`;
@@ -1289,6 +1324,10 @@
                 const urls = item.imgUrls || [item.img]; let imagesHtml = '';
                 urls.forEach(url => { imagesHtml += `<img src="${url}" alt="Image" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { if(this.parentElement && this.parentElement.children.length > 1) { this.remove(); } else { this.onerror=null; this.classList.replace('object-cover', 'object-contain'); this.classList.add('p-4'); this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; } }">`; });
                 if (urls.length > 1) { imagesHtml += `<img src="${urls[0]}" data-is-clone="true" alt="Image Clone" class="w-full h-full object-cover shrink-0 snap-center group-hover:scale-105 transition-transform duration-500">`; }
+
+                // NEW: If variable, quick add button forces modal open to select size.
+                const clickAction = item.isVariable ? `openModal('${item.id}')` : `event.stopPropagation(); toggleQuickCart('${item.id}')`;
+                const btnIcon = item.isVariable ? 'fa-list-ul' : 'fa-plus';
 
                 card.innerHTML = `
                     <button onclick="toggleLike(event, '${item.id}')" class="absolute top-2 start-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors shadow-sm z-20 text-sm">
@@ -1308,8 +1347,8 @@
                         <p class="text-xs text-gray-500 line-clamp-2 mt-1 mb-2 flex-grow">${item.desc}</p>
                         <div class="flex justify-between items-end mt-1">
                             ${item.calories ? `<div class="flex items-center gap-1 text-[10px] sm:text-xs font-bold text-orange-500 bg-orange-50 w-fit px-2 py-1 rounded-md"><i class="fas fa-fire"></i> ${item.calories} Cal</div>` : '<div></div>'}
-                            <button onclick="event.stopPropagation(); toggleQuickCart('${item.id}')" class="quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300">
-                                <i class="quick-add-icon-${item.id} fas fa-plus text-sm transition-transform duration-500"></i>
+                            <button onclick="${clickAction}" class="quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-colors duration-300 relative z-10 pointer-events-auto">
+                                <i class="quick-add-icon-${item.id} fas ${btnIcon} text-sm transition-transform duration-500 pointer-events-none"></i>
                             </button>
                         </div>
                     </div>
@@ -1377,7 +1416,57 @@
             document.getElementById('modalDeliveryText').textContent = `${t.deliveryPrefix} ${delCharge}`;
 
             let modalCurrencyDisplay = getSmartCurrency(globalCurrency, "text-sm md:text-base font-normal mx-1 text-red-400");
-            const priceHtml = currentLang === 'en' ? `<span class="text-red-400 flex items-baseline justify-end">${modalCurrencyDisplay}<span class="text-3xl text-red-500">${item.price}</span></span>` : `<span class="text-red-400 flex items-baseline justify-end"><span class="text-3xl text-red-500">${item.price}</span>${modalCurrencyDisplay}</span>`;
+            
+            // NEW: Variant Selection Logic
+            const variantArea = document.getElementById('modalVariantArea');
+            const variantOptions = document.getElementById('modalVariantOptions');
+            document.getElementById('label-variant').textContent = currentLang === 'en' ? 'Select Option' : 'اختر الحجم';
+            
+            if (item.isVariable && item.variants && item.variants.length > 0) {
+                variantArea.classList.remove('hidden');
+                variantOptions.innerHTML = '';
+                
+                item.variants.forEach((v, idx) => {
+                    const isSelected = idx === 0;
+                    const btn = document.createElement('button');
+                    btn.className = `variant-btn px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${isSelected ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-200 bg-white text-gray-600 hover:border-red-300'}`;
+                    btn.innerHTML = `${v.variantName} - <span class="font-extrabold ml-1">${v.price} ${modalCurrencyDisplay.replace(/<[^>]*>?/gm, '')}</span>`;
+                    
+                    btn.onclick = () => {
+                        document.querySelectorAll('.variant-btn').forEach(b => b.className = 'variant-btn px-4 py-2 rounded-xl border-2 border-gray-200 bg-white text-gray-600 text-sm font-bold transition-all hover:border-red-300');
+                        btn.className = 'variant-btn px-4 py-2 rounded-xl border-2 border-red-500 bg-red-50 text-red-600 text-sm font-bold transition-all';
+                        
+                        const updatedPriceHtml = currentLang === 'en' 
+                            ? `<span class="text-red-400 flex items-baseline justify-end">${modalCurrencyDisplay}<span class="text-3xl text-red-500">${v.price}</span></span>` 
+                            : `<span class="text-red-400 flex items-baseline justify-end"><span class="text-3xl text-red-500">${v.price}</span>${modalCurrencyDisplay}</span>`;
+                        document.getElementById('modalPrice').innerHTML = updatedPriceHtml;
+                        
+                        document.getElementById('productModal').setAttribute('data-selected-variant', v.variantName);
+                        document.getElementById('productModal').setAttribute('data-selected-price', v.price);
+                        
+                        // NEW: Force the Add to Cart button to check if this specific size is already in the cart
+                        updateQuickAddButtons(); 
+                    };
+                    variantOptions.appendChild(btn);
+                });
+                // Default to first variant
+                document.getElementById('productModal').setAttribute('data-selected-variant', item.variants[0].variantName);
+                document.getElementById('productModal').setAttribute('data-selected-price', item.variants[0].price);
+                
+                // Show default price
+                document.getElementById('modalPrice').innerHTML = currentLang === 'en' 
+                    ? `<span class="text-red-400 flex items-baseline justify-end">${modalCurrencyDisplay}<span class="text-3xl text-red-500">${item.variants[0].price}</span></span>` 
+                    : `<span class="text-red-400 flex items-baseline justify-end"><span class="text-3xl text-red-500">${item.variants[0].price}</span>${modalCurrencyDisplay}</span>`;
+            } else {
+                variantArea.classList.add('hidden');
+                document.getElementById('productModal').removeAttribute('data-selected-variant');
+                document.getElementById('productModal').removeAttribute('data-selected-price');
+                
+                // Standard price
+                document.getElementById('modalPrice').innerHTML = currentLang === 'en' 
+                    ? `<span class="text-red-400 flex items-baseline justify-end">${modalCurrencyDisplay}<span class="text-3xl text-red-500">${item.price}</span></span>` 
+                    : `<span class="text-red-400 flex items-baseline justify-end"><span class="text-3xl text-red-500">${item.price}</span>${modalCurrencyDisplay}</span>`;
+            }
             document.getElementById('modalPrice').innerHTML = priceHtml;
 
             if(item.calories) { document.getElementById('modalCalories').textContent = item.calories; document.getElementById('modalCalories').parentElement.classList.remove('hidden'); document.getElementById('modalCalories').parentElement.classList.add('inline-flex'); } 
@@ -1729,51 +1818,57 @@
         setTimeout(() => { initTableSelect(); setupDraggable('table-grid'); }, 500);
       
         function addToCart() {
-            if(!currentOpenItemId) return; const item = activeMenuData.find(i => i.id === currentOpenItemId); if(!item) return;
-            const existingItem = cart.find(c => c.id === currentOpenItemId);
-            if (existingItem) { existingItem.qty += 1; } else { cart.push({ ...item, qty: 1 }); }
+            if(!currentOpenItemId) return; 
+            const item = activeMenuData.find(i => String(i.id) === String(currentOpenItemId)); 
+            if(!item) return;
+
+            let cartId = item.id;
+            let price = item.price;
+            let variantName = "";
+
+            if (item.isVariable) {
+                variantName = document.getElementById('productModal').getAttribute('data-selected-variant') || item.variants[0].variantName;
+                price = parseFloat(document.getElementById('productModal').getAttribute('data-selected-price')) || item.variants[0].price;
+                cartId = `${item.id}_${variantName}`;
+            }
+
+            const existingItem = cart.find(c => String(c.cartId) === String(cartId));
+            if (existingItem) { 
+                existingItem.qty += 1; 
+            } else { 
+                cart.push({ ...item, cartId: cartId, price: price, variantName: variantName, qty: 1 }); 
+            }
             updateCartUI(); 
         }
 
+        // Toggle from Modal
         function toggleQuickCart(id) {
-            const itemIndex = cart.findIndex(c => String(c.id) === String(id));
-            if (itemIndex > -1) { cart.splice(itemIndex, 1); } 
-            else {
-                const item = activeMenuData.find(i => String(i.id) === String(id));
-                if (item) cart.push({ ...item, qty: 1 });
+            const item = activeMenuData.find(i => String(i.id) === String(id));
+            if (!item) return;
+
+            let cartId = id;
+            let price = item.price;
+            let variantName = "";
+            const isModalOpen = !document.getElementById('productModal').classList.contains('hidden');
+
+            if (item.isVariable) {
+                if (isModalOpen) {
+                    variantName = document.getElementById('productModal').getAttribute('data-selected-variant') || item.variants[0].variantName;
+                    price = parseFloat(document.getElementById('productModal').getAttribute('data-selected-price')) || item.variants[0].price;
+                } else {
+                    variantName = item.variants[0].variantName;
+                    price = item.variants[0].price;
+                }
+                cartId = `${id}_${variantName}`;
+            }
+
+            const itemIndex = cart.findIndex(c => String(c.cartId) === String(cartId));
+            if (itemIndex > -1) { 
+                cart.splice(itemIndex, 1); 
+            } else {
+                cart.push({ ...item, cartId: cartId, price: price, variantName: variantName, qty: 1 });
             }
             updateCartUI(); 
-        }
-
-        function updateQuickAddButtons() {
-            activeMenuData.forEach(item => {
-                const btns = document.querySelectorAll(`.quick-add-btn-${item.id}`);
-                const icons = document.querySelectorAll(`.quick-add-icon-${item.id}`);
-                const isInCart = cart.some(c => String(c.id) === String(item.id));
-                
-                btns.forEach(btn => {
-                    btn.className = isInCart 
-                        ? `quick-add-btn-${item.id} bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-110 transition-colors duration-300`
-                        : `quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-600 hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto`;
-                });
-                icons.forEach(icon => {
-                    icon.className = isInCart
-                        ? `quick-add-icon-${item.id} fas fa-minus text-sm transition-transform duration-500 rotate-180 pointer-events-none`
-                        : `quick-add-icon-${item.id} fas fa-plus text-[10px] sm:text-sm transition-transform duration-500 rotate-0 pointer-events-none`;
-                });
-            });
-
-            const modalCartBtn = document.getElementById('modal-cart-btn'); const modalCartIcon = document.getElementById('modal-cart-icon'); const modalCartText = document.getElementById('modal-cart-text');
-            if (modalCartBtn && currentOpenItemId) {
-                const isInCart = cart.some(c => String(c.id) === String(currentOpenItemId));
-                if (isInCart) {
-                    modalCartBtn.className = "flex-1 bg-red-500 text-white text-center py-3 rounded-xl font-bold hover:bg-red-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2";
-                    modalCartIcon.className = "fas fa-trash-alt text-lg"; modalCartText.innerText = "Remove from Cart";
-                } else {
-                    modalCartBtn.className = "flex-1 bg-orange-500 text-white text-center py-3 rounded-xl font-bold hover:bg-orange-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2";
-                    modalCartIcon.className = "fas fa-cart-plus text-lg"; modalCartText.innerText = "Add to Cart";
-                }
-            }
         }
 
         function updateCartUI() {
@@ -1783,24 +1878,28 @@
             else { floatingBtn.classList.add('hidden'); floatingBtn.classList.remove('flex'); closeCartModal(); }
 
             container.innerHTML = ''; let subtotal = 0;
-            cart.forEach((item, index) => {
+            cart.forEach((item) => {
                 const itemPrice = parseFloat(item.price) || 0; const itemTotal = itemPrice * item.qty; subtotal += itemTotal;
+                
+                // Show variant badge if it exists
+                const variantBadge = item.variantName ? `<span class="text-[10px] bg-red-50 text-red-600 border border-red-200 px-1.5 py-0.5 rounded ml-1 font-bold">${item.variantName}</span>` : '';
+
                 container.innerHTML += `
                     <div class="flex items-center gap-2 bg-white p-2 rounded-lg mb-2 shadow-sm border border-gray-100">
-                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="if(this.src.includes('.jpg')) { this.src=this.src.replace('.jpg', '.png'); } else if(this.src.includes('.png')) { this.src=this.src.replace('.png', '.jpeg'); } else { this.onerror=null; this.src='${rawBranding.smartLogo || 'https://raw.githubusercontent.com/DigiDatas/KARAK-WA-KARAK/main/logo.png'}'; }">
+                        <img src="${item.img}" class="w-12 h-12 rounded-md object-cover bg-gray-100 shrink-0" onerror="this.onerror=null; this.src='${rawBranding.smartLogo || 'logo.png'}';">
 
                         <div class="flex-grow min-w-0">
-                            <h4 class="font-bold text-gray-800 text-xs leading-tight truncate">${item.name}</h4>
+                            <h4 class="font-bold text-gray-800 text-xs leading-tight truncate">${item.name} ${variantBadge}</h4>
                             <div class="text-[10px] text-gray-500 mt-0.5 flex items-baseline gap-1">${getSmartCurrency(globalCurrency, '')} <span>${itemPrice.toFixed(2)}</span> <span>x ${item.qty}</span></div>
                         </div>
                         <div class="flex flex-col items-end gap-1 shrink-0">
                             <span class="font-bold text-red-600 text-xs">${itemTotal.toFixed(2)}</span>
                             <div class="flex items-center">
-                                <button onclick="removeFromCart('${item.id}')" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors me-1"><i class="fas fa-trash-alt text-xs"></i></button>
+                                <button onclick="removeFromCart('${item.cartId}')" class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 transition-colors me-1"><i class="fas fa-trash-alt text-xs"></i></button>
                                 <div class="flex items-center gap-1 bg-gray-100 rounded p-0.5">
-                                    <button onclick="changeQty('${item.id}', -1)" class="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 shadow-sm"><i class="fas fa-minus text-[10px]"></i></button>
+                                    <button onclick="changeQty('${item.cartId}', -1)" class="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 shadow-sm"><i class="fas fa-minus text-[10px]"></i></button>
                                     <span class="font-bold text-xs w-3 text-center">${item.qty}</span>
-                                    <button onclick="changeQty('${item.id}', 1)" class="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 shadow-sm"><i class="fas fa-plus text-[10px]"></i></button>
+                                    <button onclick="changeQty('${item.cartId}', 1)" class="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 shadow-sm"><i class="fas fa-plus text-[10px]"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -1808,15 +1907,86 @@
                 `;
             });
             document.getElementById('cart-total').innerHTML = `${getSmartCurrency(globalCurrency, 'me-1')} ${subtotal.toFixed(2)}`;
+            
+            // Re-bind quick add buttons
             updateQuickAddButtons();
         }
 
-        function changeQty(id, change) {
-            const item = cart.find(c => String(c.id) === String(id));
-            if (item) { item.qty += change; if (item.qty <= 0) { cart = cart.filter(c => String(c.id) !== String(id)); } updateCartUI(); }
+        function changeQty(cartId, change) {
+            const item = cart.find(c => String(c.cartId) === String(cartId));
+            if (item) { item.qty += change; if (item.qty <= 0) { cart = cart.filter(c => String(c.cartId) !== String(cartId)); } updateCartUI(); }
         }
 
-        function removeFromCart(id) { cart = cart.filter(c => String(c.id) !== String(id)); updateCartUI(); }
+        function removeFromCart(cartId) { 
+            cart = cart.filter(c => String(c.cartId) !== String(cartId)); 
+            updateCartUI(); 
+        }
+
+        
+
+        function updateQuickAddButtons() {
+            activeMenuData.forEach(item => {
+                const btns = document.querySelectorAll(`.quick-add-btn-${item.id}`);
+                const icons = document.querySelectorAll(`.quick-add-icon-${item.id}`);
+                
+                if (item.isVariable) {
+                    // For variable items, lock the grid button to the Orange "Options" state
+                    btns.forEach(btn => {
+                        btn.className = `quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-600 hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto`;
+                    });
+                    icons.forEach(icon => {
+                        icon.className = `quick-add-icon-${item.id} fas fa-list-ul text-sm transition-transform duration-500 pointer-events-none`;
+                    });
+                } else {
+                    // For normal items, standard add/remove state
+                    const isInCart = cart.some(c => String(c.id) === String(item.id));
+                    btns.forEach(btn => {
+                        btn.className = isInCart 
+                            ? `quick-add-btn-${item.id} bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-red-600 hover:scale-110 transition-colors duration-300`
+                            : `quick-add-btn-${item.id} bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-600 hover:scale-110 transition-colors duration-300 z-10 relative pointer-events-auto`;
+                    });
+                    icons.forEach(icon => {
+                        icon.className = isInCart
+                            ? `quick-add-icon-${item.id} fas fa-minus text-sm transition-transform duration-500 rotate-180 pointer-events-none`
+                            : `quick-add-icon-${item.id} fas fa-plus text-[10px] sm:text-sm transition-transform duration-500 rotate-0 pointer-events-none`;
+                    });
+                }
+            });
+
+            // Update the big action button inside the Product Modal
+            const modalCartBtn = document.getElementById('modal-cart-btn'); 
+            const modalCartIcon = document.getElementById('modal-cart-icon'); 
+            const modalCartText = document.getElementById('modal-cart-text');
+            
+            if (modalCartBtn && currentOpenItemId) {
+                const item = activeMenuData.find(i => String(i.id) === String(currentOpenItemId));
+                let cartIdToCheck = currentOpenItemId;
+                
+                // If it's a variable item, check if the *currently selected size* is in the cart
+                if (item && item.isVariable) {
+                    const selectedVariant = document.getElementById('productModal').getAttribute('data-selected-variant');
+                    if (selectedVariant) {
+                        cartIdToCheck = `${currentOpenItemId}_${selectedVariant}`;
+                    }
+                }
+
+                const isInCart = cart.some(c => String(c.cartId) === String(cartIdToCheck));
+                
+                if (isInCart) {
+                    modalCartBtn.className = "flex-1 bg-red-500 text-white text-center py-3 rounded-xl font-bold hover:bg-red-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2";
+                    modalCartIcon.className = "fas fa-trash-alt text-lg"; 
+                    modalCartText.innerText = currentLang === 'en' ? "Remove from Cart" : "إزالة من السلة";
+                } else {
+                    modalCartBtn.className = "flex-1 bg-orange-500 text-white text-center py-3 rounded-xl font-bold hover:bg-orange-600 transition-all duration-300 shadow-md flex items-center justify-center gap-2";
+                    modalCartIcon.className = "fas fa-cart-plus text-lg"; 
+                    modalCartText.innerText = currentLang === 'en' ? "Add to Cart" : "أضف إلى السلة";
+                }
+            }
+        }
+
+        
+
+        
 
         function openCartModal() {
             if(cart.length === 0) return; 
