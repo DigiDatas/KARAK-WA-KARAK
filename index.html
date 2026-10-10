@@ -928,18 +928,8 @@
                 startLoaderAnimation(); // No logo provided, start immediately
             }
 
-                // Loading Screen Logo
-                const loaderIcon = document.getElementById('loader-default-icon');
-                const loaderImg = document.getElementById('loader-brand-img');
-                if (loaderIcon && loaderImg) {
-                    loaderIcon.classList.add('hidden');
-                    loaderImg.src = rawBranding.smartLogo;
-                    loaderImg.classList.remove('hidden');
-                }
-            }
-
             renderOffers();
-
+            
             const t = staticText[currentLang];
             document.getElementById('searchInput').placeholder = ''; 
             document.getElementById('empty-text').textContent = t.empty;
@@ -2468,26 +2458,50 @@ function renderQuickAccessFilters() {
             }
         }, { passive: true });
 
-        const pModal = document.getElementById('productModal'); const pContent = document.getElementById('modalContent');
-        let pullStartY = 0; let isPulling = false;
+        const pModal = document.getElementById('productModal'); 
+        const pContent = document.getElementById('modalContent');
+        let pullStartY = 0; 
+        let isPulling = false;
+        let currentDeltaY = 0; // NEW: Track exact finger distance safely
 
         pModal.addEventListener('touchstart', (e) => {
             const scrollArea = pContent.querySelector('.overflow-y-auto');
-            if (scrollArea && scrollArea.scrollTop <= 0) { pullStartY = e.touches[0].clientY; isPulling = true; pContent.classList.remove('transition-all', 'duration-300'); } 
-            else { isPulling = false; }
+            if (scrollArea && scrollArea.scrollTop <= 0) { 
+                pullStartY = e.touches[0].clientY; 
+                isPulling = true; 
+                currentDeltaY = 0;
+                pContent.classList.remove('transition-all', 'duration-300'); 
+            } else { 
+                isPulling = false; 
+            }
         }, { passive: true });
 
         pModal.addEventListener('touchmove', (e) => {
-            if (!isPulling) return; const deltaY = e.touches[0].clientY - pullStartY;
-            if (deltaY > 0) { if (e.cancelable) e.preventDefault(); pContent.style.transform = `translateY(${deltaY * 0.4}px)`; } 
-            else { pContent.style.transform = ''; isPulling = false; }
+            if (!isPulling) return; 
+            currentDeltaY = e.touches[0].clientY - pullStartY;
+            
+            if (currentDeltaY > 0) { 
+                if (e.cancelable) e.preventDefault(); 
+                // Increased speed from 0.4 to 0.85 so it sticks to the finger!
+                pContent.style.transform = `translateY(${currentDeltaY * 0.85}px)`; 
+            } else { 
+                pContent.style.transform = ''; 
+                isPulling = false; 
+            }
         }, { passive: false });
 
         pModal.addEventListener('touchend', () => {
-            if (!isPulling) return; isPulling = false; pContent.classList.add('transition-all', 'duration-300');
-            const currentPullAmount = parseInt(pContent.style.transform.replace(/[^\d.]/g, '') || "0");
-            if (currentPullAmount > 100) { pContent.style.transform = ''; closeModal(); } 
-            else { pContent.style.transform = ''; }
+            if (!isPulling) return; 
+            isPulling = false; 
+            pContent.classList.add('transition-all', 'duration-300');
+            
+            // Lowered the swipe threshold from 100 to 60 so a light flick closes it
+            if (currentDeltaY > 60) { 
+                pContent.style.transform = ''; 
+                closeModal(); 
+            } else { 
+                pContent.style.transform = ''; 
+            }
         });
 
         function openBrandModal() {
@@ -2540,24 +2554,49 @@ function renderQuickAccessFilters() {
         }
 
         function setupBrandPullToClose() {
-            const pModal = document.getElementById('brandModal'); const pContent = document.getElementById('brandModalContent');
+            const pModal = document.getElementById('brandModal'); 
+            const pContent = document.getElementById('brandModalContent');
             if(pModal.hasPullListener) return; pModal.hasPullListener = true;
-            let pullStartY = 0; let isPulling = false;
+            
+            let pullStartY = 0; 
+            let isPulling = false; 
+            let currentDeltaY = 0;
+            
             pModal.addEventListener('touchstart', (e) => {
                 const scrollArea = pContent.querySelector('.overflow-y-auto');
-                if (scrollArea && scrollArea.scrollTop <= 0) { pullStartY = e.touches[0].clientY; isPulling = true; pContent.classList.remove('transition-all', 'duration-300'); } 
-                else { isPulling = false; }
+                if (scrollArea && scrollArea.scrollTop <= 0) { 
+                    pullStartY = e.touches[0].clientY; 
+                    isPulling = true; 
+                    currentDeltaY = 0; 
+                    pContent.classList.remove('transition-all', 'duration-300'); 
+                } else { 
+                    isPulling = false; 
+                }
             }, { passive: true });
+            
             pModal.addEventListener('touchmove', (e) => {
-                if (!isPulling) return; const deltaY = e.touches[0].clientY - pullStartY;
-                if (deltaY > 0) { if (e.cancelable) e.preventDefault(); pContent.style.transform = `translateY(${deltaY * 0.4}px)`; } 
-                else { pContent.style.transform = ''; isPulling = false; }
+                if (!isPulling) return; 
+                currentDeltaY = e.touches[0].clientY - pullStartY;
+                if (currentDeltaY > 0) { 
+                    if (e.cancelable) e.preventDefault(); 
+                    pContent.style.transform = `translateY(${currentDeltaY * 0.85}px)`; 
+                } else { 
+                    pContent.style.transform = ''; 
+                    isPulling = false; 
+                }
             }, { passive: false });
+            
             pModal.addEventListener('touchend', () => {
-                if (!isPulling) return; isPulling = false; pContent.classList.add('transition-all', 'duration-300');
-                const currentPullAmount = parseInt(pContent.style.transform.replace(/[^\d.]/g, '') || "0");
-                if (currentPullAmount > 100) { pContent.style.transform = ''; closeBrandModal(); } 
-                else { pContent.style.transform = ''; }
+                if (!isPulling) return; 
+                isPulling = false; 
+                pContent.classList.add('transition-all', 'duration-300');
+                
+                if (currentDeltaY > 60) { 
+                    pContent.style.transform = ''; 
+                    closeBrandModal(); 
+                } else { 
+                    pContent.style.transform = ''; 
+                }
             });
         }
 
